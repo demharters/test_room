@@ -21,8 +21,8 @@ class edit_files(object):
                     i += 1
 
                 except ValueError:
-                    print("Removed line: "+line)
-
+                    #print("Removed line: "+line)
+                    pass
 
     def sort_values(self):
 
@@ -35,6 +35,74 @@ class edit_files(object):
             self.my_sorted_keys.append(x[0])
             self.my_sorted_values.append(x[1])
 
+    def filter_values(self,period):
+
+        self.no_models = 0
+        self.no_minima = 0
+
+        #self.my_filtered_values = []
+        
+        self.my_temperature_minima = []
+        self.my_temperature_minima.append(int(period) - int((period/4)))
+
+        for value in range(len(self.my_data)):
+
+            self.no_models += 1
+        
+        for i in range(1,int((self.no_models/period))):
+            
+            self.my_temperature_minima.append(self.my_temperature_minima[i-1] + period)
+            self.no_minima += 1
+
+    def write_models(self,my_pdb_file):
+    # Takes full trajectory as input and returns trajectory filtered for
+    # values in self.my_temperature_minima.
+        
+        my_pdb_output = open("minima.pdb","w")
+
+        with open(my_pdb_file) as f:
+            
+            parsing = False
+            i = 1
+
+            for line in f:
+
+                if "MODEL" in line and int(line.split()[1]) in self.my_temperature_minima:
+                    
+                    parsing = True
+
+                    print(str(line.split()[0]),str(i),file= my_pdb_output)
+                 
+                    i += 1
+
+                elif "MODEL" in line and int(line.split()[1]) not in self.my_temperature_minima:
+
+                    parsing = False
+
+                else:
+                    pass
+
+
+
+                if "MODEL" not in line and parsing:
+
+                    print(line.rstrip("\n"),file= my_pdb_output)
+
+                else:
+
+                    pass
+
+
+        my_pdb_output.close()
+
+    def write_energy(self):
+        
+        my_energy_output = open("energy.dat","w")
+
+        for i in self.my_temperature_minima:
+            print(self.my_data[i],file = my_energy_output)
+
+        my_energy_output.close()
 
     def print_values(self,no_of_values):
         
@@ -47,11 +115,13 @@ class edit_files(object):
 
         for i in range(no_of_values):
 
-            print(str(self.my_sorted_keys[i]).ljust(self.col_width),str(self.my_sorted_values[i]).ljust(self.col_width))
+            print(str(self.my_sorted_keys[i]).ljust(self.col_width),
+                    str(self.my_sorted_values[i]).ljust(self.col_width))
 
 energy_file = edit_files("sampled.pot_energy")
 my_energies = energy_file.clean_file()
 energy_file.sort_values()
-energy_file.print_values(100)
-
-
+#energy_file.print_values(10)
+energy_file.filter_values(4)
+energy_file.write_models("sampled.pos.pdb")
+energy_file.write_energy()
