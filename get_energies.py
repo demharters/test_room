@@ -1,4 +1,4 @@
-#! usr/bin/python3
+#! /usr/bin/python3
 import operator
 
 class edit_files(object):
